@@ -1,4 +1,4 @@
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, AgglomerativeClustering
 import time
 import numpy as np
 from PIL import Image
@@ -8,7 +8,7 @@ def build_kmeans(img_flat, img_np, n, max_iter, algo):
     model = KMeans(n_clusters=n, max_iter=max_iter, algorithm=algo)
     model.fit(img_flat)
     end = time.time()
-    elapsed = round(end-start,2)
+    elapsed = round(end-start,4)
 
     inertia = round(model.inertia_,2)
     cluster_centers = model.cluster_centers_
@@ -21,3 +21,13 @@ def build_kmeans(img_flat, img_np, n, max_iter, algo):
 
     return elapsed, inertia, cluster_centers, iters, compressed_img, compressed_img_pil
     
+def build_agglomerative(img_flat, img_np, n, linkage):
+    start = time.time()
+    model = AgglomerativeClustering(n_clusters=n, linkage=linkage)
+    model.fit(img_flat)
+    end = time.time()
+    elapsed = round(end-start,4)
+
+    
+
+    labels = model.predict(img_flat)

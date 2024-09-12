@@ -9,7 +9,6 @@ from src.models.build_models import build_kmeans
 
 st.set_page_config(layout="wide")
 
-# Customizing the Header Section
 st.markdown("""
     <style>
     .main-header {
@@ -82,7 +81,7 @@ if uploaded_file is not None:
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### 2. **Clustering algorithm**")
     clustering_chosen = st.sidebar.selectbox("Choose a clustering method...",
-                                            ["K-means"],
+                                            ["K-means", "Agglomerative Clustering"],
                                             )
 
     if clustering_chosen is not None:
@@ -96,9 +95,13 @@ if uploaded_file is not None:
                                         1, 1000, value = 300)
         algo_radio = st.sidebar.radio("K-means algorithm to use",
                                     ("lloyd", 'elkan'))
-        
+    
+    if clustering_chosen == 'Agglomerative Clustering':
+        n_number = st.sidebar.number_input("Number of clusters to form", 
+                                        1, 100, value=2)
+    
     st.sidebar.markdown("---")
-    st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} clustering!**")
+    st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
     
     cluster_button = st.sidebar.button(label="Compress")
 
@@ -110,12 +113,15 @@ if uploaded_file is not None:
                                                                 max_iter=max_iter_slider, 
                                                                 algo=algo_radio)
         
+        # if clustering_chosen == 'Agglomerative Clustering':
+        #     build agglomerative()
+        
         st.markdown(f'<p class="clustering-results">Results of {clustering_chosen} Clustering:</p>', unsafe_allow_html=True)
         st.markdown(f"""
                         * **Number of Clusters**: {n_number}
                         * **Inertia**: {inertia}
                         * **Iterations**: {iters}
-                        * **Time taken**: {elapsed} seconds
+                        * **Time taken**: {elapsed*1000} ms
                         """)
         
         buffer = io.BytesIO()
@@ -128,3 +134,4 @@ if uploaded_file is not None:
                            data=buffer,
                            file_name= f"{clustering_chosen}_color_compressed.png",
                            mime='image/png')
+        
