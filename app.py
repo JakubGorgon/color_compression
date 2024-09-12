@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
-import streamlit as st
+import streamlit as st; import streamlit_ext as ste
 import matplotlib.pyplot as plt
 from PIL import Image
+import io
 
 from src.models.build_models import build_kmeans
 
@@ -27,10 +28,15 @@ st.markdown("""
     }
     .clustering-results {
         font-size:36px;
-        color: #378200; /* Choose a bold and contrasting color */
+        color: #378200; 
         text-align:left;
         font-weight: bold;
-        
+    }
+    .compressed-img-title {
+        font-size:24px;
+        color: #378200; 
+        text-align:left;
+        font-weight: bold;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -66,11 +72,13 @@ def img_to_tabular(img):
             img = img.convert('RGB')
         img_np = np.array(img)
         img_tab = pd.DataFrame(img_np.reshape(-1, 3), columns=['r', 'g', 'b'])
-        return img, img_tab
+        img_flat = img_tab.values
+       
+        return img, img_np, img_flat
 
 
 if uploaded_file is not None:
-    img, img_tab = img_to_tabular(uploaded_file)
+    img, img_np, img_flat = img_to_tabular(uploaded_file)
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### 2. **Clustering algorithm**")
     clustering_chosen = st.sidebar.selectbox("Choose a clustering method...",
@@ -96,13 +104,27 @@ if uploaded_file is not None:
 
     if cluster_button:
         if clustering_chosen == 'K-means':
-            build_kmeans(img=img_tab, n=n_number, 
-                    max_iter=max_iter_slider, algo=algo_radio)
+            elapsed, inertia, cluster_centers, iters, compressed_image, compressed_image_pil = build_kmeans(img_flat=img_flat,
+                                                                img_np=img_np,
+                                                                n=n_number, 
+                                                                max_iter=max_iter_slider, 
+                                                                algo=algo_radio)
         
-        st.markdown(f'<p class="clustering-results">Results of {clustering_chosen} Clustering</p>', unsafe_allow_html=True)
-        st.markdown("""
-                        * **Number of Clusters**: 5
-                        * **Inertia**: 200.45
-                        * **Iterations**: 10
-                        * **Time taken**: 2.5 seconds
+        st.markdown(f'<p class="clustering-results">Results of {clustering_chosen} Clustering:</p>', unsafe_allow_html=True)
+        st.markdown(f"""
+                        * **Number of Clusters**: {n_number}
+                        * **Inertia**: {inertia}
+                        * **Iterations**: {iters}
+                        * **Time taken**: {elapsed} seconds
                         """)
+        
+        buffer = io.BytesIO()
+        compressed_image_pil.save(buffer, format="PNG")
+        buffer.seek(0)
+        
+        st.markdown(f'<p class="compressed-img-title">Your image after applying {clustering_chosen}</p>', unsafe_allow_html=True)
+        st.image(buffer, width=750)
+        ste.download_button("Download ", 
+                           data=buffer,
+                           file_name= f"{clustering_chosen}_color_compressed.png",
+                           mime='image/png')
