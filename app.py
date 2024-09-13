@@ -5,40 +5,12 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 
-from src.models.build_models import build_kmeans
+from styles import styles
+from src.models.build_models import build_kmeans, build_agglomerative
 
 st.set_page_config(layout="wide")
 
-st.markdown("""
-    <style>
-    .main-header {
-        font-size:48px;
-        color: #4B0082;
-        text-align:center;
-        font-weight: bold;
-        margin-bottom: 0px;
-    }
-    .sub-header {
-        font-size:24px;
-        color: #8A2BE2;
-        text-align:center;
-        font-weight: normal;
-        margin-top: 0px;
-    }
-    .clustering-results {
-        font-size:36px;
-        color: #378200; 
-        text-align:left;
-        font-weight: bold;
-    }
-    .compressed-img-title {
-        font-size:24px;
-        color: #378200; 
-        text-align:left;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
+st.markdown(styles, unsafe_allow_html=True)
 
 st.markdown('<p class="main-header">Machine Learning for Color Compression 🎨</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-header">Discover, Use, Tune, and Compare Unsupervised Clustering Algorithms</p>', unsafe_allow_html=True)
@@ -73,11 +45,11 @@ def img_to_tabular(img):
         img_tab = pd.DataFrame(img_np.reshape(-1, 3), columns=['r', 'g', 'b'])
         img_flat = img_tab.values
        
-        return img, img_np, img_flat
+        return img, img_np, img_flat, img_tab
 
 
 if uploaded_file is not None:
-    img, img_np, img_flat = img_to_tabular(uploaded_file)
+    img, img_np, img_flat, img_tab = img_to_tabular(uploaded_file)
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### 2. **Clustering algorithm**")
     clustering_chosen = st.sidebar.selectbox("Choose a clustering method...",
@@ -90,7 +62,7 @@ if uploaded_file is not None:
 
     if clustering_chosen == 'K-means':
         n_number = st.sidebar.number_input("Number of clusters to form", 
-                                        1, 100, value=8)
+                                        1, 100, value=4)
         max_iter_slider = st.sidebar.slider("Maximum number of iterations",
                                         1, 1000, value = 300)
         algo_radio = st.sidebar.radio("K-means algorithm to use",
@@ -98,12 +70,12 @@ if uploaded_file is not None:
     
     if clustering_chosen == 'Agglomerative Clustering':
         n_number = st.sidebar.number_input("Number of clusters to form", 
-                                        1, 100, value=2)
+                                        1, 100, value=4)
     
     st.sidebar.markdown("---")
     st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
     
-    cluster_button = st.sidebar.button(label="Compress")
+    cluster_button = st.sidebar.button(label="Compress Colors")
 
     if cluster_button:
         if clustering_chosen == 'K-means':
@@ -112,15 +84,19 @@ if uploaded_file is not None:
                                                                 n=n_number, 
                                                                 max_iter=max_iter_slider, 
                                                                 algo=algo_radio)
-        
-        # if clustering_chosen == 'Agglomerative Clustering':
-        #     build agglomerative()
-        
-        st.markdown(f'<p class="clustering-results">Results of {clustering_chosen} Clustering:</p>', unsafe_allow_html=True)
-        st.markdown(f"""
+            st.markdown(f'<p class="clustering-results">Results of {clustering_chosen} Color Compression:</p>', unsafe_allow_html=True)
+            st.markdown(f"""
                         * **Number of Clusters**: {n_number}
                         * **Inertia**: {inertia}
                         * **Iterations**: {iters}
+                        * **Time taken**: {elapsed*1000} ms
+                        """) 
+        if clustering_chosen == 'Agglomerative Clustering':
+            compressed_image_pil, elapsed = build_agglomerative(img_np = img_np, img_tab = img_tab, n=n_number)
+        
+            st.markdown(f'<p class="clustering-results">Results of {clustering_chosen} Color Compression:</p>', unsafe_allow_html=True)
+            st.markdown(f"""
+                        * **Number of Clusters**: {n_number}
                         * **Time taken**: {elapsed*1000} ms
                         """)
         
