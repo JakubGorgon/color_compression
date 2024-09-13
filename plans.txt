@@ -1,0 +1,6 @@
+What to do next:
+13-09-2024:
+    - After clustering for the 2-nth time display results underneath the previous one
+    - Implement more functionality for Agglomerative Clustering
+    - Display a message when models are being fit 
+    - Add styling (fade ins for results and images)

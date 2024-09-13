@@ -75,6 +75,8 @@ if uploaded_file is not None:
     st.sidebar.markdown("---")
     st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
     
+    original_image_checkbox = st.sidebar.checkbox("Display original image", True)
+    
     cluster_button = st.sidebar.button(label="Compress Colors")
 
     if cluster_button:
@@ -84,30 +86,65 @@ if uploaded_file is not None:
                                                                 n=n_number, 
                                                                 max_iter=max_iter_slider, 
                                                                 algo=algo_radio)
-            st.markdown(f'<p class="clustering-results">Results of {clustering_chosen} Color Compression:</p>', unsafe_allow_html=True)
+            st.markdown(f'<p class="clustering-results">Results of {clustering_chosen}:</p>', unsafe_allow_html=True)
             st.markdown(f"""
-                        * **Number of Clusters**: {n_number}
-                        * **Inertia**: {inertia}
-                        * **Iterations**: {iters}
-                        * **Time taken**: {elapsed*1000} ms
-                        """) 
+                <ul class="cluster-info">
+                <li><strong>Number of Clusters:</strong> {n_number}</li>
+                <li><strong>Inertia:</strong> {inertia}</li>
+                <li><strong>Iterations:</strong> {iters}</li>
+                <li><strong>Time taken:</strong> {elapsed * 1000:.2f} ms</li>
+                </ul>
+                """, unsafe_allow_html=True)
+            
         if clustering_chosen == 'Agglomerative Clustering':
             compressed_image_pil, elapsed = build_agglomerative(img_np = img_np, img_tab = img_tab, n=n_number)
         
-            st.markdown(f'<p class="clustering-results">Results of {clustering_chosen} Color Compression:</p>', unsafe_allow_html=True)
+            st.markdown(f'<p class="clustering-results">Results of {clustering_chosen}:</p>', unsafe_allow_html=True)
             st.markdown(f"""
-                        * **Number of Clusters**: {n_number}
-                        * **Time taken**: {elapsed*1000} ms
-                        """)
+                <ul class="cluster-info">
+                <li><strong>Number of Clusters:</strong> {n_number}</li>
+                <li><strong>Time taken:</strong> {elapsed * 1000:.2f} ms</li>
+                </ul>
+                """, unsafe_allow_html=True)
+        
+        hide_img_fs = '''
+        <style>
+        button[title="View fullscreen"]{
+            visibility: hidden;}
+        </style>
+        '''
+
+        st.markdown(hide_img_fs, unsafe_allow_html=True)
         
         buffer = io.BytesIO()
         compressed_image_pil.save(buffer, format="PNG")
         buffer.seek(0)
-        
-        st.markdown(f'<p class="compressed-img-title">Your image after applying {clustering_chosen}</p>', unsafe_allow_html=True)
-        st.image(buffer, width=750)
-        ste.download_button("Download ", 
+            
+        if original_image_checkbox:         
+            col1, col2 = st.columns(2)  # Create two columns
+            
+            with col1:
+                st.markdown(f'<p class="compressed-img-title">Original Image</p>', unsafe_allow_html=True)
+                st.image(img, width=600, caption=f"Before {clustering_chosen}")  # Display original image in the first column
+                
+            with col2:
+                st.markdown(f'<p class="compressed-img-title">Color Compressed Image</p>', unsafe_allow_html=True)
+                st.image(compressed_image_pil, width=600, caption=f"After {clustering_chosen}")  # Display compressed image in the second column
+                ste.download_button("Download ", 
                            data=buffer,
                            file_name= f"{clustering_chosen}_color_compressed.png",
                            mime='image/png')
+        else:
+            st.markdown(f'<p class="compressed-img-title">Your image after applying {clustering_chosen}</p>', unsafe_allow_html=True)
+            st.image(compressed_image_pil, width=750)  # Display compressed
+            ste.download_button("Download ", 
+                           data=buffer,
+                           file_name= f"{clustering_chosen}_color_compressed.png",
+                           mime='image/png')
+
+        st.markdown("---")
+
+
+
+
         
