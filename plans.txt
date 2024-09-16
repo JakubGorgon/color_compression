@@ -1,6 +1,12 @@
 What to do next:
 13-09-2024:
+    - Change Agglomerative clustering logic by predicting on the whole set instead of the sample
+        - IMPOSSIBLE SO EASILY!! Add multiple checks to resize the image into 10k rows flat and just show the compressed image with the compressed colors
+        - RESIZE img_np and NOT img_flat in order to have fromarray() method work correctly later on
     - After clustering for the 2-nth time display results underneath the previous one
+        - It means that when changing stuff in sidebar the image doesnt disapear
     - Implement more functionality for Agglomerative Clustering
     - Display a message when models are being fit 
     - Add styling (fade ins for results and images)
+    - Add optional 3d plots with RGB (?)
+    - Add more Clustering Algorithms (Especially one finding the n clusters by themselves)

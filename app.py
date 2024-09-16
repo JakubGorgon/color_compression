@@ -6,7 +6,8 @@ from PIL import Image
 import io
 
 from styles import styles
-from src.models.build_models import build_kmeans, build_agglomerative
+from src.models.build_models import build_kmeans, build_bisecting_kmeans
+from src.data.data_transformations import img_to_tabular
 
 st.set_page_config(layout="wide")
 
@@ -36,24 +37,13 @@ st.sidebar.markdown("#### 1. **Upload your image**")
 uploaded_file = st.sidebar.file_uploader("Choose an image...", 
                                  type=["jpg", "jpeg", "png"])
 
-def img_to_tabular(img):
-    if uploaded_file is not None:
-        img = Image.open(uploaded_file)
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-        img_np = np.array(img)
-        img_tab = pd.DataFrame(img_np.reshape(-1, 3), columns=['r', 'g', 'b'])
-        img_flat = img_tab.values
-       
-        return img, img_np, img_flat, img_tab
-
 
 if uploaded_file is not None:
-    img, img_np, img_flat, img_tab = img_to_tabular(uploaded_file)
+    img, img_np, img_flat, img_tab = img_to_tabular(img=uploaded_file)
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### 2. **Clustering algorithm**")
     clustering_chosen = st.sidebar.selectbox("Choose a clustering method...",
-                                            ["K-means", "Agglomerative Clustering"],
+                                            ["K-means", "Bisecting K-means"],
                                             )
 
     if clustering_chosen is not None:
@@ -68,9 +58,16 @@ if uploaded_file is not None:
         algo_radio = st.sidebar.radio("K-means algorithm to use",
                                     ("lloyd", 'elkan'))
     
-    if clustering_chosen == 'Agglomerative Clustering':
+    if clustering_chosen == 'Bisecting K-means':
         n_number = st.sidebar.number_input("Number of clusters to form", 
                                         1, 100, value=4)
+        initialization_number = st.sidebar.number_input("Number of time the inner k-means algorithm will be run with different centroid seeds in each bisection.",
+                                                 1,10, value=1)        
+        initialization_method_radio = st.sidebar.radio(label = "Method for initialization",
+                                       options =("k-means++", "random"),
+                                        index=1)
+        bisecting_strategy_radio = st.sidebar.radio("How bisection should be performed",
+                                                    ("biggest_inertia", "largest_cluster"))
     
     st.sidebar.markdown("---")
     st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
@@ -82,27 +79,25 @@ if uploaded_file is not None:
     if cluster_button:
         if clustering_chosen == 'K-means':
             elapsed, inertia, cluster_centers, iters, compressed_image, compressed_image_pil = build_kmeans(img_flat=img_flat,
-                                                                img_np=img_np,
-                                                                n=n_number, 
-                                                                max_iter=max_iter_slider, 
-                                                                algo=algo_radio)
-            st.markdown(f'<p class="clustering-results">Results of {clustering_chosen}:</p>', unsafe_allow_html=True)
-            st.markdown(f"""
+                                                                                                            img_np=img_np,
+                                                                                                            n=n_number, 
+                                                                                                            max_iter=max_iter_slider, 
+                                                                                                            algo=algo_radio)       
+
+        if clustering_chosen == 'Bisecting K-means':
+            elapsed, inertia, cluster_centers, compressed_image, compressed_image_pil = build_bisecting_kmeans(img_flat=img_flat,
+                                                                                                           img_np=img_np,
+                                                                                                           n=n_number,
+                                                                                                           initialization=initialization_method_radio,
+                                                                                                           n_initialization=initialization_number,                                                                                            
+                                                                                                           bisecting_strat=bisecting_strategy_radio)
+        
+        
+        st.markdown(f'<p class="clustering-results">Results of {clustering_chosen}:</p>', unsafe_allow_html=True)
+        st.markdown(f"""
                 <ul class="cluster-info">
                 <li><strong>Number of Clusters:</strong> {n_number}</li>
                 <li><strong>Inertia:</strong> {inertia}</li>
-                <li><strong>Iterations:</strong> {iters}</li>
-                <li><strong>Time taken:</strong> {elapsed * 1000:.2f} ms</li>
-                </ul>
-                """, unsafe_allow_html=True)
-            
-        if clustering_chosen == 'Agglomerative Clustering':
-            compressed_image_pil, elapsed = build_agglomerative(img_np = img_np, img_tab = img_tab, n=n_number)
-        
-            st.markdown(f'<p class="clustering-results">Results of {clustering_chosen}:</p>', unsafe_allow_html=True)
-            st.markdown(f"""
-                <ul class="cluster-info">
-                <li><strong>Number of Clusters:</strong> {n_number}</li>
                 <li><strong>Time taken:</strong> {elapsed * 1000:.2f} ms</li>
                 </ul>
                 """, unsafe_allow_html=True)
