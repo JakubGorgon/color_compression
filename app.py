@@ -37,6 +37,8 @@ st.sidebar.markdown("#### 1. **Upload your image**")
 uploaded_file = st.sidebar.file_uploader("Choose an image...", 
                                  type=["jpg", "jpeg", "png"])
 
+if 'results' not in st.session_state:
+    st.session_state.results = []
 
 if uploaded_file is not None:
     img, img_np, img_flat, img_tab = img_to_tabular(img=uploaded_file)
@@ -92,54 +94,66 @@ if uploaded_file is not None:
                                                                                                            n_initialization=initialization_number,                                                                                            
                                                                                                            bisecting_strat=bisecting_strategy_radio)
         
+        buffer = io.BytesIO()
+        compressed_image_pil.save(buffer, format="PNG")
+        buffer.seek(0)
         
-        st.markdown(f'<p class="clustering-results">Results of {clustering_chosen}:</p>', unsafe_allow_html=True)
-        st.markdown(f"""
-                <ul class="cluster-info">
-                <li><strong>Number of Clusters:</strong> {n_number}</li>
-                <li><strong>Inertia:</strong> {inertia}</li>
-                <li><strong>Time taken:</strong> {elapsed * 1000:.2f} ms</li>
-                </ul>
-                """, unsafe_allow_html=True)
+        st.session_state.results.append({
+            'clustering_chosen': clustering_chosen,
+            'n_number': n_number,
+            'elapsed': elapsed,
+            'compressed_image': compressed_image_pil,
+            'original_image': img if original_image_checkbox else None,
+            'buffer': buffer,
+            'metrics': {
+                'inertia': inertia,
+                'iterations': iters if clustering_chosen == 'K-means' else None,
+                'time': elapsed,
+            }
+        })
         
-        hide_img_fs = '''
+    hide_img_fs = '''
         <style>
         button[title="View fullscreen"]{
             visibility: hidden;}
         </style>
         '''
-
-        st.markdown(hide_img_fs, unsafe_allow_html=True)
+    st.markdown(hide_img_fs, unsafe_allow_html=True)
         
-        buffer = io.BytesIO()
-        compressed_image_pil.save(buffer, format="PNG")
-        buffer.seek(0)
-            
-        if original_image_checkbox:         
-            col1, col2 = st.columns(2)  # Create two columns
-            
-            with col1:
-                st.markdown(f'<p class="compressed-img-title">Original Image</p>', unsafe_allow_html=True)
-                st.image(img, width=600, caption=f"Before {clustering_chosen}")  # Display original image in the first column
-                
-            with col2:
-                st.markdown(f'<p class="compressed-img-title">Color Compressed Image</p>', unsafe_allow_html=True)
-                st.image(compressed_image_pil, width=600, caption=f"After {clustering_chosen}")  # Display compressed image in the second column
+
+    if 'results' in st.session_state and len(st.session_state.results) > 0:
+        for idx, result in enumerate(st.session_state.results):
+            st.markdown(f'<p class="clustering-results">Results of {result['clustering_chosen']} ({idx+1}):</p>', unsafe_allow_html=True)
+            st.markdown(f"""
+                <ul class="cluster-info">
+                <li><strong>Number of Clusters:</strong> {result['n_number']}</li>
+                <li><strong>Time taken:</strong> {result['metrics']['time']:.2f} s</li>
+                {"<li><strong>Inertia:</strong> " + str(result['metrics']['inertia']) + "</li>" if result['metrics']['inertia'] is not None else ""}
+                {"<li><strong>Iterations:</strong> " + str(result['metrics']['iterations']) + "</li>" if result['metrics']['iterations'] is not None else ""}
+                </ul>
+            """, unsafe_allow_html=True)
+
+            if result['original_image'] is not None:
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(f'<p class="compressed-img-title">Original Image</p>', unsafe_allow_html=True)
+                    st.image(result['original_image'], width=600, caption=f"Before {result['clustering_chosen']}")  
+                with col2:
+                    st.markdown(f'<p class="compressed-img-title">Color Compressed Image</p>', unsafe_allow_html=True)
+                    st.image(result['compressed_image'], width=600, caption=f"After {result['clustering_chosen']}")  # Display compressed image in the second column
+                    ste.download_button("Download ", 
+                            data=result['buffer'],
+                            file_name= f"{result['clustering_chosen']}_color_compressed.png",
+                            mime='image/png')
+            else:
+                st.markdown(f'<p class="compressed-img-title">Your image after applying {result['clustering_chosen']}</p>', unsafe_allow_html=True)
+                st.image(result['compressed_image'], width=750)  # Display compressed
                 ste.download_button("Download ", 
-                           data=buffer,
-                           file_name= f"{clustering_chosen}_color_compressed.png",
-                           mime='image/png')
-        else:
-            st.markdown(f'<p class="compressed-img-title">Your image after applying {clustering_chosen}</p>', unsafe_allow_html=True)
-            st.image(compressed_image_pil, width=750)  # Display compressed
-            ste.download_button("Download ", 
-                           data=buffer,
-                           file_name= f"{clustering_chosen}_color_compressed.png",
-                           mime='image/png')
-
-        st.markdown("---")
+                            data=result['buffer'],
+                            file_name= f"{result['clustering_chosen']}_color_compressed.png",
+                            mime='image/png')
+            
+            st.markdown("---")
 
 
-
-
-        
+            
