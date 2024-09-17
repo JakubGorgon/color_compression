@@ -6,7 +6,7 @@ from PIL import Image
 import io
 
 from styles import styles
-from src.models.build_models import build_kmeans, build_bisecting_kmeans
+from src.models.build_models import build_kmeans, build_bisecting_kmeans, build_mini_batch_kmeans
 from src.data.data_transformations import img_to_tabular
 
 st.set_page_config(layout="wide")
@@ -45,7 +45,7 @@ if uploaded_file is not None:
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### 2. **Clustering algorithm**")
     clustering_chosen = st.sidebar.selectbox("Choose a clustering method...",
-                                            ["K-means", "Bisecting K-means"],
+                                            ["K-means", "Bisecting K-means", "Mini Batch K-means"]
                                             )
 
     if clustering_chosen is not None:
@@ -70,7 +70,14 @@ if uploaded_file is not None:
                                         index=1)
         bisecting_strategy_radio = st.sidebar.radio("How bisection should be performed",
                                                     ("biggest_inertia", "largest_cluster"))
-    
+        
+    if clustering_chosen == 'Mini Batch K-means':
+        n_number = st.sidebar.number_input("Number of clusters to form", 
+                                        1, 100, value=4)
+        batch_size_number_input = st.sidebar.slider("Size of the mini batches", min_value=2, max_value=8192, value= 1024, step=1)
+        reassignment_ratio_slider = st.sidebar.slider("Control the fraction of the maximum number of counts for a center to be reassigned",
+                                                      min_value=0.00,max_value=1.00,step=0.01, value=0.01)
+        
     st.sidebar.markdown("---")
     st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
     
@@ -94,6 +101,13 @@ if uploaded_file is not None:
                                                                                                            n_initialization=initialization_number,                                                                                            
                                                                                                            bisecting_strat=bisecting_strategy_radio)
         
+        if clustering_chosen == "Mini Batch K-means":
+            elapsed, inertia, iters, cluster_centers, compressed_image, compressed_image_pil = build_mini_batch_kmeans(img_flat = img_flat,
+                                                                                                                   img_np = img_np,
+                                                                                                                   n=n_number,
+                                                                                                                   batch_size=batch_size_number_input,
+                                                                                                                   reassignment_ratio=reassignment_ratio_slider)
+        
         buffer = io.BytesIO()
         compressed_image_pil.save(buffer, format="PNG")
         buffer.seek(0)
@@ -107,7 +121,7 @@ if uploaded_file is not None:
             'buffer': buffer,
             'metrics': {
                 'inertia': inertia,
-                'iterations': iters if clustering_chosen == 'K-means' else None,
+                'iterations': iters if clustering_chosen != 'Bisecting K-means' else None,
                 'time': elapsed,
             }
         })
