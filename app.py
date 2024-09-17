@@ -169,5 +169,3 @@ if uploaded_file is not None:
             
             st.markdown("---")
 
-
-            

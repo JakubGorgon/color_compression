@@ -67,6 +67,8 @@ styles = """
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         margin-bottom: 5px;
         opacity: 0; /* Start hidden */
+        max-height: 500px;
+        aspect-ratio: auto;
         animation: fadeIn 1.5s ease-in-out forwards; /* Fade-in effect */
     }
     
@@ -74,6 +76,7 @@ styles = """
     .stImage img {
         width: 100%;
         height: auto;
+        max-height: 10px;
         border: 2px solid #378200;
         border-radius: 8px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
