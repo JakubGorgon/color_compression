@@ -146,45 +146,43 @@ if uploaded_file is not None:
         })
         
     hide_img_fs = '''
-        <style>
-        button[title="View fullscreen"]{
-            visibility: hidden;}
-        </style>
-        '''
+            <style>
+            button[title="View fullscreen"]{
+                visibility: hidden;}
+            </style>
+            '''
     st.markdown(hide_img_fs, unsafe_allow_html=True)
         
 
     if 'results' in st.session_state and len(st.session_state.results) > 0:
         for idx, result in enumerate(st.session_state.results):
-            st.markdown(f'<p class="clustering-results">Results of {result['clustering_chosen']} ({idx+1}):</p>', unsafe_allow_html=True)
-            st.markdown(f"""
-                <ul class="cluster-info">
-                <li><strong>Number of Clusters:</strong> {result['n_number']}</li>
-                <li><strong>Time taken:</strong> {result['metrics']['time']:.2f} s</li>
-                {"<li><strong>Inertia:</strong> " + str(result['metrics']['inertia']) + "</li>" if result['metrics']['inertia'] is not None else ""}
-                {"<li><strong>Iterations:</strong> " + str(result['metrics']['iterations']) + "</li>" if result['metrics']['iterations'] is not None else ""}
-                </ul>
-            """, unsafe_allow_html=True)
+            with st.expander(f"Results of {result['clustering_chosen']} ({idx+1}):", expanded=(idx == len(st.session_state.results) - 1), icon ="📋"):
+                st.markdown(f"""
+                    <ul class="cluster-info">
+                    <li><strong>Number of Clusters:</strong> {result['n_number']}</li>
+                    <li><strong>Time taken:</strong> {result['metrics']['time']:.2f} s</li>
+                    {"<li><strong>Inertia:</strong> " + str(result['metrics']['inertia']) + "</li>" if result['metrics']['inertia'] is not None else ""}
+                    {"<li><strong>Iterations:</strong> " + str(result['metrics']['iterations']) + "</li>" if result['metrics']['iterations'] is not None else ""}
+                    </ul>
+                """, unsafe_allow_html=True)
 
-            if result['original_image'] is not None:
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown(f'<p class="compressed-img-title">Original Image</p>', unsafe_allow_html=True)
-                    st.image(result['original_image'], width=600, caption=f"Before {result['clustering_chosen']}")  
-                with col2:
-                    st.markdown(f'<p class="compressed-img-title">Color Compressed Image</p>', unsafe_allow_html=True)
-                    st.image(result['compressed_image'], width=600, caption=f"After {result['clustering_chosen']}")  # Display compressed image in the second column
-                    ste.download_button("Download ", 
-                            data=result['buffer'],
-                            file_name= f"{result['clustering_chosen']}_color_compressed.png",
-                            mime='image/png')
-            else:
-                st.markdown(f'<p class="compressed-img-title">Your image after applying {result['clustering_chosen']}</p>', unsafe_allow_html=True)
-                st.image(result['compressed_image'], width=750)  # Display compressed
-                ste.download_button("Download ", 
-                            data=result['buffer'],
-                            file_name= f"{result['clustering_chosen']}_color_compressed.png",
-                            mime='image/png')
-            
-            st.markdown("---")
+                if result['original_image'] is not None:
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown(f'<p class="compressed-img-title">Original Image</p>', unsafe_allow_html=True)
+                        st.image(result['original_image'], width=600, caption=f"Before {result['clustering_chosen']}")  
+                    with col2:
+                        st.markdown(f'<p class="compressed-img-title">Color Compressed Image</p>', unsafe_allow_html=True)
+                        st.image(result['compressed_image'], width=600, caption=f"After {result['clustering_chosen']}")  # Display compressed image in the second column
+                        ste.download_button("Download", 
+                                            data=result['buffer'],
+                                            file_name=f"{result['clustering_chosen']}_color_compressed.png",
+                                            mime='image/png')
+                else:
+                    st.markdown(f'<p class="compressed-img-title">Your image after applying {result['clustering_chosen']}</p>', unsafe_allow_html=True)
+                    st.image(result['compressed_image'], width=750)  # Display compressed image
+                    ste.download_button("Download", 
+                                        data=result['buffer'],
+                                        file_name=f"{result['clustering_chosen']}_color_compressed.png",
+                                        mime='image/png')
 

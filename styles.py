@@ -67,7 +67,7 @@ styles = """
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         margin-bottom: 5px;
         opacity: 0; /* Start hidden */
-        max-height: 500px;
+        max-height: 400px;
         aspect-ratio: auto;
         animation: fadeIn 1.5s ease-in-out forwards; /* Fade-in effect */
     }
