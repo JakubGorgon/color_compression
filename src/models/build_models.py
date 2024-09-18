@@ -3,6 +3,8 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from sklearn.cluster import KMeans, AgglomerativeClustering, BisectingKMeans, MiniBatchKMeans
+import skfuzzy as fuzz
+
 import time
 import numpy as np
 from PIL import Image
@@ -89,3 +91,16 @@ def build_mini_batch_kmeans(img_flat, img_np, n, batch_size, reassignment_ratio)
     compressed_img_pil = Image.fromarray(compressed_img)
 
     return elapsed, inertia, iters, cluster_centers, compressed_img, compressed_img_pil
+
+def build_fuzzy_cmeans(img_flat, img_np, n, fuzzifier, max_iters):
+    start = time.time()
+    cluster_centers, membership_matrix, _, _, _, iters, _ = fuzz.cmeans(data=img_flat.T,c=n, m=fuzzifier, error=0.005,maxiter=max_iters)
+    end = time.time()
+    elapsed = round(end-start,4)
+    
+    labels = np.argmax(membership_matrix, axis=0)
+    compressed_img = cluster_centers[labels]
+    compressed_img = compressed_img.reshape(img_np.shape).astype(np.uint8)
+    compressed_img_pil = Image.fromarray(compressed_img)
+
+    return elapsed, iters, cluster_centers, compressed_img, compressed_img_pil

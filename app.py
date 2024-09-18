@@ -6,7 +6,7 @@ from PIL import Image
 import io
 
 from styles import styles
-from src.models.build_models import build_kmeans, build_bisecting_kmeans, build_mini_batch_kmeans
+from src.models.build_models import build_kmeans, build_bisecting_kmeans, build_mini_batch_kmeans, build_fuzzy_cmeans
 from src.data.data_transformations import img_to_tabular
 
 st.set_page_config(layout="wide")
@@ -45,7 +45,7 @@ if uploaded_file is not None:
     st.sidebar.markdown("---")
     st.sidebar.markdown("#### 2. **Clustering algorithm**")
     clustering_chosen = st.sidebar.selectbox("Choose a clustering method...",
-                                            ["K-means", "Bisecting K-means", "Mini Batch K-means"]
+                                            ["K-means", "Bisecting K-means", "Mini Batch K-means", "Fuzzy C-means"]
                                             )
 
     if clustering_chosen is not None:
@@ -78,6 +78,20 @@ if uploaded_file is not None:
         reassignment_ratio_slider = st.sidebar.slider("Control the fraction of the maximum number of counts for a center to be reassigned",
                                                       min_value=0.00,max_value=1.00,step=0.01, value=0.01)
         
+    if clustering_chosen == 'Fuzzy C-means':
+        n_number = st.sidebar.number_input("Number of clusters to form", 
+                                        1, 100, value=4)
+        fuzzifier_slider = st.sidebar.slider(label = "Specify the degree of fuzziness in the fuzzy algorithm",
+                                                         min_value=1.01, 
+                                                         max_value=10.0, 
+                                                         value=2.0, 
+                                                         step=0.01)
+        max_iter_slider = st.sidebar.slider(label="Maximum number of iterations allowed",
+                                            min_value=1,
+                                            max_value=1500, 
+                                            step=1, 
+                                            value=500)
+        
     st.sidebar.markdown("---")
     st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
     
@@ -107,7 +121,12 @@ if uploaded_file is not None:
                                                                                                                    n=n_number,
                                                                                                                    batch_size=batch_size_number_input,
                                                                                                                    reassignment_ratio=reassignment_ratio_slider)
-        
+        if clustering_chosen == 'Fuzzy C-means':
+            elapsed, iters, cluster_centers, compressed_image, compressed_image_pil = build_fuzzy_cmeans(img_flat=img_flat,
+                                                                                                              img_np=img_np,
+                                                                                                              n=n_number,
+                                                                                                              fuzzifier=fuzzifier_slider,
+                                                                                                              max_iters=max_iter_slider)
         buffer = io.BytesIO()
         compressed_image_pil.save(buffer, format="PNG")
         buffer.seek(0)
@@ -120,7 +139,7 @@ if uploaded_file is not None:
             'original_image': img if original_image_checkbox else None,
             'buffer': buffer,
             'metrics': {
-                'inertia': inertia,
+                'inertia': inertia if clustering_chosen != 'Fuzzy C-means' else None,
                 'iterations': iters if clustering_chosen != 'Bisecting K-means' else None,
                 'time': elapsed,
             }
