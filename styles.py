@@ -99,6 +99,10 @@ styles = """
     html {
         scroll-behavior: smooth;
     }
+     /* Style for Streamlit expanders */
+    details {
+        opacity: 0; /* Start hidden */
+        animation: fadeIn 1.5s ease-in-out forwards; /* Fade-in effect */
     
     </style>
 
