@@ -7,7 +7,8 @@ import io
 
 from styles import styles
 from src.models.build_models import build_kmeans, build_bisecting_kmeans, build_mini_batch_kmeans, build_fuzzy_cmeans
-from src.data.data_transformations import img_to_tabular
+from src.data.data_transformations import img_to_tabular, sample_img
+from src.visualization.visualize import plot_3d_scatter, plot_3d_scatter_compressed
 
 st.set_page_config(layout="wide")
 
@@ -95,7 +96,7 @@ if uploaded_file is not None:
     st.sidebar.markdown("---")
     st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
     
-    original_image_checkbox = st.sidebar.checkbox("Display original image", True)
+    scatter_3d_checkbox = st.sidebar.checkbox("Show 3d scatterplots", True)
     
     cluster_button = st.sidebar.button(label="Compress Colors")
 
@@ -127,6 +128,13 @@ if uploaded_file is not None:
                                                                                                               n=n_number,
                                                                                                               fuzzifier=fuzzifier_slider,
                                                                                                               max_iters=max_iter_slider)
+        
+        if scatter_3d_checkbox:
+            img_tab_sample, img_tab_sample_compressed = sample_img(img_np_compressed=compressed_image, img_tab=img_tab)
+            fig_before = plot_3d_scatter(df = img_tab_sample)
+            fig_after = plot_3d_scatter_compressed(img_before=img_tab_sample, img_after= img_tab_sample_compressed)
+        
+        
         buffer = io.BytesIO()
         compressed_image_pil.save(buffer, format="PNG")
         buffer.seek(0)
@@ -136,8 +144,10 @@ if uploaded_file is not None:
             'n_number': n_number,
             'elapsed': elapsed,
             'compressed_image': compressed_image_pil,
-            'original_image': img if original_image_checkbox else None,
+            'original_image': img,
             'buffer': buffer,
+            'fig_before': fig_before if scatter_3d_checkbox == True else None,
+            'fig_after': fig_after if scatter_3d_checkbox == True else None,
             'metrics': {
                 'inertia': inertia if clustering_chosen != 'Fuzzy C-means' else None,
                 'iterations': iters if clustering_chosen != 'Bisecting K-means' else None,
@@ -166,23 +176,29 @@ if uploaded_file is not None:
                     </ul>
                 """, unsafe_allow_html=True)
 
-                if result['original_image'] is not None:
+                if result['fig_before'] is not None:
                     col1, col2 = st.columns(2)
                     with col1:
                         st.markdown(f'<p class="compressed-img-title">Original Image</p>', unsafe_allow_html=True)
-                        st.image(result['original_image'], width=600, caption=f"Before {result['clustering_chosen']}")  
+                        st.image(result['original_image'], width=600, caption=f"Before {result['clustering_chosen']}", use_column_width=True)  
+                        
+                        st.plotly_chart(result['fig_before'], use_container_width=True)
                     with col2:
                         st.markdown(f'<p class="compressed-img-title">Color Compressed Image</p>', unsafe_allow_html=True)
-                        st.image(result['compressed_image'], width=600, caption=f"After {result['clustering_chosen']}")  # Display compressed image in the second column
+                        st.image(result['compressed_image'], width=600, caption=f"After {result['clustering_chosen']}", use_column_width=True)  # Display compressed image in the second column
+                        
+                        st.plotly_chart(result['fig_after'], use_container_width=True)
+                else:
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown(f'<p class="compressed-img-title">Original Image</p>', unsafe_allow_html=True)
+                        st.image(result['original_image'], width=600, caption=f"Before {result['clustering_chosen']}", use_column_width=True)  
+                    with col2:
+                        st.markdown(f'<p class="compressed-img-title">Color Compressed Image</p>', unsafe_allow_html=True)
+                        st.image(result['compressed_image'], width=600, caption=f"After {result['clustering_chosen']}", use_column_width=True)  # Display compressed image in the second column
                         ste.download_button("Download", 
                                             data=result['buffer'],
                                             file_name=f"{result['clustering_chosen']}_color_compressed.png",
                                             mime='image/png')
-                else:
-                    st.markdown(f'<p class="compressed-img-title">Your image after applying {result['clustering_chosen']}</p>', unsafe_allow_html=True)
-                    st.image(result['compressed_image'], width=750)  # Display compressed image
-                    ste.download_button("Download", 
-                                        data=result['buffer'],
-                                        file_name=f"{result['clustering_chosen']}_color_compressed.png",
-                                        mime='image/png')
+
 

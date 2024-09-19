@@ -36,3 +36,9 @@ def downsample_image(img, target_pixels = 10000):
     
     return downsampled_img_pil
     
+def sample_img(img_np_compressed, img_tab, n = 1000):
+    img_tab_sample = img_tab.sample(n=n, random_state=42).sort_index()
+    compressed_img_tab = pd.DataFrame(img_np_compressed.reshape(-1,3))
+    img_tab_sample_compressed = compressed_img_tab.iloc[img_tab_sample.index]
+    img_tab_sample_compressed.columns = ['r', 'g', 'b']
+    return img_tab_sample, img_tab_sample_compressed # Returns a sample of n rows from the image and that same sample with compressed colors
