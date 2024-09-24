@@ -48,57 +48,57 @@ if uploaded_file is not None:
     clustering_chosen = st.sidebar.selectbox("Choose a clustering method...",
                                             ["K-means", "Bisecting K-means", "Mini Batch K-means", "Fuzzy C-means"]
                                             )
-
     if clustering_chosen is not None:
         st.sidebar.markdown("---")
         st.sidebar.markdown(f"#### 3. **Tune {clustering_chosen} hyperparameters**")
 
-    if clustering_chosen == 'K-means':
-        n_number = st.sidebar.number_input("Number of clusters to form", 
-                                        1, 100, value=4)
-        max_iter_slider = st.sidebar.slider("Maximum number of iterations",
-                                        1, 1000, value = 300)
-        algo_radio = st.sidebar.radio("K-means algorithm to use",
-                                    ("lloyd", 'elkan'))
-    
-    if clustering_chosen == 'Bisecting K-means':
-        n_number = st.sidebar.number_input("Number of clusters to form", 
-                                        1, 100, value=4)
-        initialization_number = st.sidebar.number_input("Number of time the inner k-means algorithm will be run with different centroid seeds in each bisection.",
-                                                 1,10, value=1)        
-        initialization_method_radio = st.sidebar.radio(label = "Method for initialization",
-                                       options =("k-means++", "random"),
-                                        index=1)
-        bisecting_strategy_radio = st.sidebar.radio("How bisection should be performed",
-                                                    ("biggest_inertia", "largest_cluster"))
+    with st.sidebar.form(key='cluster_parameters_form', clear_on_submit=False):
+        if clustering_chosen == 'K-means':
+            n_number = st.number_input("Number of clusters to form", 
+                                            1, 100, value=4)
+            max_iter_slider = st.slider("Maximum number of iterations",
+                                            1, 1000, value = 300)
+            algo_radio = st.radio("K-means algorithm to use",
+                                        ("lloyd", 'elkan'))
         
-    if clustering_chosen == 'Mini Batch K-means':
-        n_number = st.sidebar.number_input("Number of clusters to form", 
-                                        1, 100, value=4)
-        batch_size_number_input = st.sidebar.slider("Size of the mini batches", min_value=2, max_value=8192, value= 1024, step=1)
-        reassignment_ratio_slider = st.sidebar.slider("Control the fraction of the maximum number of counts for a center to be reassigned",
-                                                      min_value=0.00,max_value=1.00,step=0.01, value=0.01)
+        if clustering_chosen == 'Bisecting K-means':
+            n_number = st.number_input("Number of clusters to form", 
+                                            1, 100, value=4)
+            initialization_number = st.number_input("Number of time the inner k-means algorithm will be run with different centroid seeds in each bisection.",
+                                                    1,10, value=1)        
+            initialization_method_radio = st.radio(label = "Method for initialization",
+                                        options =("k-means++", "random"),
+                                            index=1)
+            bisecting_strategy_radio = st.radio("How bisection should be performed",
+                                                        ("biggest_inertia", "largest_cluster"))
+            
+        if clustering_chosen == 'Mini Batch K-means':
+            n_number = st.number_input("Number of clusters to form", 
+                                            1, 100, value=4)
+            batch_size_number_input = st.slider("Size of the mini batches", min_value=2, max_value=8192, value= 1024, step=1)
+            reassignment_ratio_slider = st.slider("Control the fraction of the maximum number of counts for a center to be reassigned",
+                                                        min_value=0.00,max_value=1.00,step=0.01, value=0.01)
+            
+        if clustering_chosen == 'Fuzzy C-means':
+            n_number = st.number_input("Number of clusters to form", 
+                                            1, 100, value=4)
+            fuzzifier_slider = st.slider(label = "Specify the degree of fuzziness in the fuzzy algorithm",
+                                                            min_value=1.01, 
+                                                            max_value=10.0, 
+                                                            value=2.0, 
+                                                            step=0.01)
+            max_iter_slider = st.slider(label="Maximum number of iterations allowed",
+                                                min_value=1,
+                                                max_value=1500, 
+                                                step=1, 
+                                                value=500)
+            
+        st.markdown("---")
+        st.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
         
-    if clustering_chosen == 'Fuzzy C-means':
-        n_number = st.sidebar.number_input("Number of clusters to form", 
-                                        1, 100, value=4)
-        fuzzifier_slider = st.sidebar.slider(label = "Specify the degree of fuzziness in the fuzzy algorithm",
-                                                         min_value=1.01, 
-                                                         max_value=10.0, 
-                                                         value=2.0, 
-                                                         step=0.01)
-        max_iter_slider = st.sidebar.slider(label="Maximum number of iterations allowed",
-                                            min_value=1,
-                                            max_value=1500, 
-                                            step=1, 
-                                            value=500)
+        scatter_3d_checkbox = st.checkbox("Show 3d scatterplots", True)
         
-    st.sidebar.markdown("---")
-    st.sidebar.markdown(f"#### 4. **See results of your {clustering_chosen} color compression!**")
-    
-    scatter_3d_checkbox = st.sidebar.checkbox("Show 3d scatterplots", True)
-    
-    cluster_button = st.sidebar.button(label="Compress Colors")
+        cluster_button = st.form_submit_button(label="Compress Colors")
 
     if cluster_button:
         if clustering_chosen == 'K-means':
