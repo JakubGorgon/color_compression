@@ -2,6 +2,9 @@
 
 This Streamlit app allows you to compress the color palette of images using several unsupervised clustering algorithms, such as K-means, Bisecting K-means, Mini Batch K-means, and Fuzzy C-means. Users can upload an image, select an algorithm, tune its hyperparameters, and compare the original and compressed images in 3D visualizations.
 
+## Deployed App
+Check out the live app here: [Machine Learning for Color Compression](https://color-compression.streamlit.app/)
+
 ## File Structure
 - `app.py`: Main Streamlit app file.
 - `src/`: Contains core logic for clustering algorithms and data transformations.
